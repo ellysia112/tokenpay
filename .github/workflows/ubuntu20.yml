@@ -147,6 +147,10 @@ jobs:
           --prefix=`pwd`/depends/x86_64-linux-gnu \
           --bindir=`pwd`/release/bin \
           --libdir=`pwd`/release/lib
+          
+      - name: Archive Test Results
+        if: always()
+        run: cat config.log
 
       - name: Compile project
         env:
