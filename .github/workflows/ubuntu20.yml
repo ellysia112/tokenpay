@@ -128,12 +128,6 @@ jobs:
         run: ./autogen.sh
 
       - name: Configure project
-        env:
-          PKG_CONFIG_PATH: /home/runner/work/tokenpay/tokenpay/depends/x86_64-linux-gnu/lib/pkgconfig
-          LIBRARY_PATH: /home/runner/work/tokenpay/tokenpay/depends/x86_64-linux-gnu/lib
-          LD_LIBRARY_PATH: /home/runner/work/tokenpay/tokenpay/depends/x86_64-linux-gnu/lib
-          CXXFLAGS: -I/home/runner/work/tokenpay/tokenpay/depends/x86_64-linux-gnu/include
-          CPPFLAGS: -I/home/runner/work/tokenpay/tokenpay/depends/x86_64-linux-gnu/include
         run: |
           CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site \
           ./configure \
