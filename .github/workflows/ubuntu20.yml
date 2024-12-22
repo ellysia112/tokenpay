@@ -186,6 +186,7 @@ jobs:
           --libdir=`pwd`/release/lib
           
       - name: Setup tmate session
+        if: always()
         uses: mxschmitt/action-tmate@v3
 
       - name: Check config.log
