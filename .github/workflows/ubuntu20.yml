@@ -14,6 +14,19 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Add cache for depends directory
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+            depends/x86_64-linux-gnu
+          key: ${{ runner.os }}-depends-${{ hashFiles('depends/packages/*') }}
+          restore-keys: |
+            ${{ runner.os }}-depends-
+
       - name: Update apt repositories
         run: sudo apt-get update
 
@@ -90,19 +103,21 @@ jobs:
           
       - name: Check sqlite3 version
         run: sqlite3 --version
+        
       - name: Reinstall sqlite3
         run: |
           download_link="https://www.sqlite.org/2023/sqlite-tools-linux-x64-3440200.zip"
           wget "$download_link" -P /tmp
           unzip "/tmp/$(basename "$download_link")" -d /tmp
-          sudo install /tmp/sqlite3 /usr/local/bin/\
+          sudo install /tmp/sqlite3 /usr/local/bin/
           
       - name: Check sqlite3 version
         run: sqlite3 --version
 
       - name: Verify Python Version
-        run: python --version  # Should print Python 2.7.x
+        run: python --version
 
+      # Only build dependencies if cache miss
       - name: Build dependencies
         run: cd depends && make -j8 HOST=x86_64-linux-gnu
 
@@ -112,45 +127,22 @@ jobs:
 
       - name: Copy database static library
         run: cp $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/libdb_cxx.a $GITHUB_WORKSPACE/db-4.8.30.NC/build_unix/
-        
-      - name: list made depends
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/ && ls -l
-        
-      - name: list made depends share
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/share && ls -l
-        
-      - name: list made depends share pkgconfig
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/share/pkgconfig && ls -l
-        
-      - name: list made depends include
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include && ls -l
-        
-      - name: list made depends include QtWebKit
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include/QtWebKit && ls -l
-        
-      - name: list made depends include QtWebKit/5.6.0
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include/QtWebKit/5.6.0 && ls -l
-        
-      - name: list made depends include QtCore
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include/QtCore && ls -l
-        
-      - name: list made depends include boost
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include/boost && ls -l
 
-      - name: list made depends lib pkgconfig
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig && ls -l
-        
-      - name: list made depends bin
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/bin && ls -l
-        
-      - name: list made depends native
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/native && ls -l
-        
-      - name: list made depends native bin
-        run: cd $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/native/bin && ls -l
-
-      - name: List built dependencies
-        run: ls -l $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
+      # Cache the remaining steps outputs
+      - name: Cache build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            release
+            config.log
+            .deps
+            src/*.o
+            src/*.a
+            src/qt/*.o
+            src/qt/*.a
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
       - name: Add paths to environment
         run: |
@@ -163,19 +155,6 @@ jobs:
       - name: Add binary paths to PATH
         run: echo "$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/native/bin" >> $GITHUB_PATH
 
-      - name: Verify environment variables
-        run: |
-          echo "LIBRARY_PATH: $LIBRARY_PATH"
-          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-          echo "CXXFLAGS: $CXXFLAGS"
-          echo "CPPFLAGS: $CPPFLAGS"
-          echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
-
-      - name: Verify pkg-config
-        run: |
-          pkg-config --libs Qt5WebKit
-          pkg-config --libs Qt5WebKitWidgets
-
       - name: Run autogen script
         run: ./autogen.sh
 
@@ -186,8 +165,6 @@ jobs:
           LD_LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
           CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
           CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
-
-                                                      
         run: |
           CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site \
           ./configure \
@@ -212,4 +189,3 @@ jobs:
           CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
           CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
         run: make
-        
