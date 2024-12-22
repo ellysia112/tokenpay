@@ -107,17 +107,21 @@ jobs:
 
       - name: Update autoconf to 2.71 and run autogen.sh
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget m4
+          sudo apt-get remove --purge -y autoconf
+          sudo apt-get autoremove -y
           wget https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
           tar -xzf autoconf-2.71.tar.gz
           cd autoconf-2.71
           ./configure --prefix=/usr/local
           make
           sudo make install
-          # remove old version of autoconf and create symlink
-          sudo rm -f /usr/bin/autoconf
-          sudo ln -s /usr/local/bin/autoconf /usr/bin/autoconf
+          echo "/usr/local/bin" >> $GITHUB_ENV
+          autoconf --version
+
+
+      - name: Install automake again
+        run: |
+          sudo apt-get install -y automake
 
 
 
