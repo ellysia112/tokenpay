@@ -153,6 +153,9 @@ jobs:
       - name: Add binary paths to PATH
         run: echo "$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/native/bin" >> $GITHUB_PATH
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+    
       - name: Run autogen script
         run: ./autogen.sh
 
