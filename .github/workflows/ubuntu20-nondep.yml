@@ -1,84 +1,176 @@
-# on:
-#   push
+on:
+  workflow_dispatch:
 
 jobs:
   ubuntu20:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Update apt repos
+      # First try to restore depends cache
+      - name: Restore depends cache
+        id: cache-depends
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+            depends/x86_64-linux-gnu
+          key: ${{ runner.os }}-depends-${{ hashFiles('depends/packages/*') }}
+          restore-keys: |
+            ${{ runner.os }}-depends-
+
+      - name: Update apt repositories
         run: sudo apt-get update
 
-      - name: Install base dependencies
-        run: sudo apt-get install -y build-essential xutils-dev libicu-dev libtool gperf autotools-dev automake pkg-config bsdmainutils libattr1-dev make automake bison byacc cmake curl g++-multilib binutils-gold bison byacc python2
-
-      - name: Build depends
-        run: sudo apt-get install -y libssl-dev libevent-dev asciidoc zlib1g-dev libseccomp-dev libcap-dev libncap-dev obfs4proxy libminiupnpc-dev qt5-default
-        
-      - name: More depends
-        run: sudo apt-get install -y libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler libqt5webkit5-dev libqt5webkit5
-        
-      - name: Download and extract Berkeley DB 4.8
+      - name: Install essential tools
         run: |
-          wget https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
-          tar -xzvf db-4.8.30.NC.tar.gz
+          sudo apt-get install -y \
+          build-essential \
+          xutils-dev \
+          libicu-dev \
+          dos2unix \
+          ninja-build \
+          libtool \
+          gperf \
+          autotools-dev \
+          automake \
+          pkg-config \
+          bsdmainutils \
+          libattr1-dev \
+          make \
+          bison \
+          byacc \
+          cmake \
+          curl \
+          ruby \
+          flex \
+          g++-multilib \
+          binutils-gold \
+          python2 \
+          coreutils \
+          libleveldb-dev \
+          libsqlite3-dev \
+          libwebp-dev \
+          libxml2-dev \
+          libxslt1-dev \
+          xserver-xorg-dev \
+          xorg-dev \
+          libpulse-dev \
+          libfontconfig1-dev \
+          libfreetype6-dev \
+          libx11-dev \
+          libx11-xcb-dev \
+          libxext-dev \
+          libxfixes-dev \
+          libxi-dev \
+          libxrender-dev \
+          libxcb1-dev \
+          libxcb-glx0-dev \
+          libxcb-keysyms1-dev \
+          libxcb-image0-dev \
+          libxcb-shm0-dev \
+          libxcb-icccm4-dev \
+          libxcb-sync-dev \
+          libxcb-xfixes0-dev \
+          libxcb-shape0-dev \
+          libxcb-randr0-dev \
+          libxcb-render-util0-dev \
+          libxcb-xinerama0-dev \
+          libxkbcommon-dev \
+          libxkbcommon-x11-dev \
+          xserver-xorg-dev \
+          xorg-dev \
+          libxrender-dev \
+          libxrandr-dev \
+          libxt-dev \
+          libxcb-xinerama0 \
+          libxcb-xinerama0-dev
 
-      - name: Configure Berkeley DB 4.8
-        run: cd db-4.8.30.NC/build_unix && ../dist/configure --enable-cxx
-        
-      - name: Fix atomic Berkeley DB compile bug
+      - name: Set Python 2 as default
         run: |
-          sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' db-4.8.30.NC/dbinc/atomic.h
+          sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+          sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 2
+          sudo update-alternatives --set python /usr/bin/python2
+          echo "$(dirname $(readlink -f $(which python)))" >> $GITHUB_PATH
 
-      - name: Build and install Berkeley DB 4.8
-        run: cd db-4.8.30.NC/build_unix && make && sudo make install
+      - name: Verify Python Version
+        run: python --version
 
-      - name: Link Berkeley DB libraries
-        run: |
-          sudo ln -s /usr/local/BerkeleyDB.4.8/lib/libdb-4.8.so /usr/lib/libdb-4.8.so
-          sudo ln -s /usr/local/BerkeleyDB.4.8/lib/libdb_cxx-4.8.so /usr/lib/libdb_cxx-4.8.so
+      # 
 
-      - name: Download Boost file
-        run: wget https://archives.boost.io/release/1.65.1/source/boost_1_65_1.tar.bz2
+      - name: Fix sqlite3
+        run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:\$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
+      # Build dependencies if cache miss
+      - name: Build dependencies
+        if: steps.cache-depends.outputs.cache-hit != 'true'
+        run: cd depends && make -j8 HOST=x86_64-linux-gnu
+
       
-      - name: Extract Boost file
-        run: tar -xjvf boost_1_65_1.tar.bz2
-        
-      - name: Configure and bootstrap Boost
-        run: |
-          cd boost_1_65_1
-          ./bootstrap.sh --prefix=/usr/local --with-libraries=chrono,date_time,iostreams,filesystem,program_options,system,thread,test
 
-      - name: Build and install Boost
-        run: |
-          cd boost_1_65_1
-          sudo ./b2 install
+      # Save the depends cache after building
+      - name: Save depends cache
+        if: steps.cache-depends.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+            depends/x86_64-linux-gnu
+          key: ${{ runner.os }}-depends-${{ hashFiles('depends/packages/*') }}
 
-      - name: Autogenerate TokenPay code
+      - name: Create berkeley db directories
+        run: |
+          mkdir -p db-4.8.30.NC/build_unix
+
+      - name: Copy database static library
+        run: cp $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/libdb_cxx.a $GITHUB_WORKSPACE/db-4.8.30.NC/build_unix/
+
+      - name: Add paths to environment
+        run: |
+          echo "LIBRARY_PATH=$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib:\$LIBRARY_PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib:\$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "CXXFLAGS=-I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include \$CXXFLAGS" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include \$CPPFLAGS" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig:\$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
+      - name: Add binary paths to PATH
+        run: echo "$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/native/bin" >> $GITHUB_PATH
+
+      
+    
+      - name: Run autogen script
         run: ./autogen.sh
 
-      - name: Configure TokenPay code
+      - name: Configure project
+        env:
+          PKG_CONFIG_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig
+          LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
+          LD_LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
+          CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
+          CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
         run: |
           ./configure \
-            CPPFLAGS="-I/usr/local/BerkeleyDB.4.8/include -O2" \
-            LDFLAGS="-L/usr/local/BerkeleyDB.4.8/lib" \
-            --enable-gui \
-            --disable-bench \
-            --disable-tests \
-            --disable-dependency-tracking \
-            --disable-werror \
-            --prefix=$(pwd)/depends/x86_64-linux-gnu \
-            --bindir=$(pwd)/release/bin \
-            --libdir=$(pwd)/release/lib
+          --enable-gui \
+          --disable-bench \
+          --disable-tests \
+          --disable-dependency-tracking \
+          --disable-werror \
+          --prefix=`pwd`/depends/x86_64-linux-gnu \
+          --bindir=`pwd`/release/bin \
+          --libdir=`pwd`/release/lib
+          
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
-      - name: Build wallet and daemon
+      - name: Check config.log
+        if: always()
+        run: cat config.log
+
+      - name: Compile project
         run: make
-      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tpay-ubuntu20
-          path: |
-            ./src/tokenpayd
-            ./src/tokenpay
