@@ -105,7 +105,18 @@ jobs:
       - name: Verify Python Version
         run: python --version
 
-      # 
+      - name: Update autoconf to 2.71
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
+          tar -xzf autoconf-2.71.tar.gz
+          cd autoconf-2.71
+          ./configure
+          make
+          sudo make install
+          autoconf --version
+
 
       - name: Fix sqlite3
         run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:\$PKG_CONFIG_PATH" >> $GITHUB_ENV
@@ -160,6 +171,7 @@ jobs:
           CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
           CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
         run: |
+          CONFIG_SITE=`pwd` \
           ./configure \
           --enable-gui \
           --disable-bench \
