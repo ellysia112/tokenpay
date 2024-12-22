@@ -54,6 +54,7 @@ jobs:
           ruby \
           flex \
           g++-multilib \
+          libevent-dev \
           binutils-gold \
           python2 \
           coreutils \
