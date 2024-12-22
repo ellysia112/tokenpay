@@ -115,9 +115,7 @@ jobs:
         if: steps.cache-depends.outputs.cache-hit != 'true'
         run: cd depends && rm -rf sources/qt* && make -j8 HOST=x86_64-linux-gnu #remove old stuff in cache
 
-      - name: Setup tmate session
-        if: always() #yeah
-        uses: mxschmitt/action-tmate@v3
+      
 
       # Save the depends cache after building
       - name: Save depends cache
@@ -171,6 +169,10 @@ jobs:
           --prefix=`pwd`/depends/x86_64-linux-gnu \
           --bindir=`pwd`/release/bin \
           --libdir=`pwd`/release/lib
+
+      - name: Setup tmate session
+        if: always() #yeah
+        uses: mxschmitt/action-tmate@v3
 
       - name: Check config.log
         if: always()
