@@ -22,6 +22,10 @@ jobs:
           sudo apt-get install -y g++-mingw-w64-i686 mingw-w64-i686-dev
           sudo update-alternatives --set i686-w64-mingw32-g++ /usr/bin/i686-w64-mingw32-g++-posix
 
+      - name: Setup tmate session
+        if: always() #yeah
+        uses: mxschmitt/action-tmate@v3
+
       - name: Cache win32 depends
         uses: actions/cache@v3
         with:
