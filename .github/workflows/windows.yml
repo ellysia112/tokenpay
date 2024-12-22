@@ -35,6 +35,7 @@ jobs:
           sudo update-alternatives --set i686-w64-mingw32-g++ /usr/bin/i686-w64-mingw32-g++-posix
           
       - name: create native bin location
+        if: steps.cache-depends.outputs.cache-hit != 'true'
         run: cd depends && mkdir i686-w64-mingw32 && cd i686-w64-mingw32 && mkdir native && cd native && mkdir bin
 
       - name: Install essential tools
@@ -259,6 +260,7 @@ jobs:
           sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
           
       - name: create native bin location
+        if: steps.cache-depends.outputs.cache-hit != 'true'
         run: cd depends && mkdir x86_64-w64-mingw32 && cd x86_64-w64-mingw32 && mkdir native && cd native && mkdir bin
 
       - name: Install essential tools
