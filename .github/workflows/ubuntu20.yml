@@ -115,6 +115,7 @@ jobs:
           ./configure
           make
           sudo make install
+          sudo update-alternatives --install /usr/bin/autoconf autoconf /usr/local/bin/autoconf 1
           autoconf --version
 
 
