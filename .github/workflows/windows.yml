@@ -217,6 +217,10 @@ jobs:
         
       - name: Auto-generate configuration
         run: ./autogen.sh
+
+      - name: Setup tmate session
+        if: always() #yeah
+        uses: mxschmitt/action-tmate@v3
         
       - name: configure
         run: CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --enable-gui --prefix=/
@@ -427,6 +431,10 @@ jobs:
 
       - name: Auto-generate configuration
         run: ./autogen.sh
+
+      - name: Setup tmate session
+        if: always() #yeah
+        uses: mxschmitt/action-tmate@v3
         
       - name: configure
         run: CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --enable-gui --prefix=
