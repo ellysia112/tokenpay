@@ -105,21 +105,20 @@ jobs:
       - name: Verify Python Version
         run: python --version
 
-      - name: Update autoconf to 2.71
+      - name: Update autoconf to 2.71 and run autogen.sh
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget
+          sudo apt-get install -y wget m4
           wget https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
           tar -xzf autoconf-2.71.tar.gz
           cd autoconf-2.71
           ./configure
           make
           sudo make install
-          # remove old version of autoconf cuz if not it wont get replaced
+          # remove old version of autoconf and create symlink
           sudo rm -f /usr/bin/autoconf
-          # create symlink to newly installed version
           sudo ln -s /usr/local/bin/autoconf /usr/bin/autoconf
-          autoconf --version
+
 
 
       - name: Fix sqlite3
