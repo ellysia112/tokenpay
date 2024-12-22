@@ -116,6 +116,7 @@ jobs:
         run: cd depends && rm -rf sources/qt* && make -j8 HOST=x86_64-linux-gnu #remove old stuff in cache
 
       - name: Setup tmate session
+        if: always() #yeah
         uses: mxschmitt/action-tmate@v3
 
       # Save the depends cache after building
