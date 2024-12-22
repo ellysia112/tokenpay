@@ -100,23 +100,13 @@ jobs:
           sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
           sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 2
           sudo update-alternatives --set python /usr/bin/python2
-          echo "$(dirname $(readlink -f $(which python)))" >> $GITHUB_PATH
-          
-      - name: Check sqlite3 version
-        run: sqlite3 --version
-        
-      - name: Reinstall sqlite3
-        run: |
-          download_link="https://www.sqlite.org/2023/sqlite-tools-linux-x64-3440200.zip"
-          wget "$download_link" -P /tmp
-          unzip "/tmp/$(basename "$download_link")" -d /tmp
-          sudo install /tmp/sqlite3 /usr/local/bin/
-          
-      - name: Check sqlite3 version
-        run: sqlite3 --version
+          echo "$(dirname $(readlink -f $(which python)))" >> $GITHUB_PATH             
 
       - name: Verify Python Version
         run: python --version
+
+      - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
 
       # Build dependencies if cache miss
       - name: Build dependencies
@@ -153,8 +143,7 @@ jobs:
       - name: Add binary paths to PATH
         run: echo "$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/native/bin" >> $GITHUB_PATH
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      
     
       - name: Run autogen script
         run: ./autogen.sh
