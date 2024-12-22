@@ -180,9 +180,6 @@ jobs:
           --bindir=`pwd`/release/bin \
           --libdir=`pwd`/release/lib
           
-      - name: Setup tmate session
-        if: always()
-        uses: mxschmitt/action-tmate@v3
 
       - name: Check config.log
         if: always()
@@ -190,3 +187,10 @@ jobs:
 
       - name: Compile project
         run: make
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tpay-ubuntu20
+          path: |
+            ./src/tokenpayd
+            ./src/tokenpay
