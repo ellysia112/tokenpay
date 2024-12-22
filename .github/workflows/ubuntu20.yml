@@ -24,7 +24,7 @@ jobs:
             depends/sources
             depends/work
             depends/x86_64-linux-gnu
-          key: Linux-depends-abed62b37e6114478d7ca6fc43df9d2e55af860c
+          key: ${{ runner.os }}-depends-${{ hashFiles('depends/packages/*') }}
           restore-keys: |
             ${{ runner.os }}-depends-
 
@@ -113,7 +113,7 @@ jobs:
       # Build dependencies if cache miss
       - name: Build dependencies
         if: steps.cache-depends.outputs.cache-hit != 'true'
-        run: cd depends && rm -rf sources/qt* && make -j8 HOST=x86_64-linux-gnu #remove old stuff in cache
+        run: cd depends && make -j8 HOST=x86_64-linux-gnu
 
       
 
@@ -169,11 +169,13 @@ jobs:
           --prefix=`pwd`/depends/x86_64-linux-gnu \
           --bindir=`pwd`/release/bin \
           --libdir=`pwd`/release/lib
+          
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
+      - name: Check config.log
+        if: always()
+        run: cat config.log
 
       - name: Compile project
         run: make
-      
-      - name: Setup tmate session
-        if: always() #yeah
-        uses: mxschmitt/action-tmate@v3
