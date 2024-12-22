@@ -100,13 +100,13 @@ jobs:
           sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
           sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 2
           sudo update-alternatives --set python /usr/bin/python2
-          echo "$(dirname $(readlink -f $(which python)))" >> $GITHUB_PATH             
+          echo "$(dirname $(readlink -f $(which python)))" >> $GITHUB_PATH
 
       - name: Verify Python Version
         run: python --version
 
       - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@v3
 
       # Build dependencies if cache miss
       - name: Build dependencies
