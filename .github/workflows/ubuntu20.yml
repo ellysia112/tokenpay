@@ -24,7 +24,7 @@ jobs:
             depends/sources
             depends/work
             depends/x86_64-linux-gnu
-          key: ${{ runner.os }}-depends-${{ hashFiles('depends/packages/*') }}
+          key: Linux-depends-abed62b37e6114478d7ca6fc43df9d2e55af860c
           restore-keys: |
             ${{ runner.os }}-depends-
 
