@@ -4,35 +4,36 @@ on:
   workflow_dispatch:  # This allows manual triggering
 
 jobs:
-  init-cache:
+  restore-cache-find-qt:
     runs-on: ubuntu-20.04
+
     steps:
-      - name: Create depends directories
-        run: mkdir -p depends
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Download pre-built depends
-        run: |
-          wget http://46.250.238.190:8080/depends.zip
-          unzip depends.zip
-          
-      - name: List contents to verify
-        run: |
-          echo "Contents of current directory:"
-          ls -la
-          echo "Contents of depends directory:"
-          ls -la depends/
-
-      - name: Save to cache
-        uses: actions/cache/save@v3
+      - name: Restore depends cache
+        id: cache-depends
+        uses: actions/cache/restore@v3
         with:
           path: |
             depends/built
             depends/sources
             depends/work
             depends/x86_64-linux-gnu
-          key: ${{ runner.os }}-depends-${{ github.sha }}
+          key: linux-depends-2a7404608d0a5e86221b3255a866cc033cfd528e0e8ba683f5f3fb3933808a92
 
-      - name: Output cache key
+      - name: Check if cache was restored
         run: |
-          echo "Cache has been initialized with key: ${{ runner.os }}-depends-${{ github.sha }}"
-          echo "Please update your main workflow to use this key"
+          if [ -z "${{ steps.cache-depends.outputs.cache-hit }}" ]; then
+            echo "Cache not found. Exiting."
+            exit 1
+          fi
+
+      - name: Unzip cache contents
+        run: |
+          mkdir -p depends-unzipped
+          unzip -o depends/built/* -d depends-unzipped || echo "No zip file to unzip."
+
+      - name: Find and grep Qt
+        run: |
+          find depends-unzipped | grep qt
