@@ -108,7 +108,7 @@ jobs:
       # Build dependencies if cache miss
       - name: Build dependencies
         if: steps.cache-depends.outputs.cache-hit != 'true'
-        run: cd depends && make -j8 HOST=x86_64-linux-gnu
+        run: cd depends && make -j60 HOST=x86_64-linux-gnu
 
       
 
