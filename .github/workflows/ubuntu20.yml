@@ -155,8 +155,8 @@ jobs:
         run: |
           echo "LIBRARY_PATH=$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib:\$LIBRARY_PATH" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib:\$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "CXXFLAGS=-I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include \$CXXFLAGS" >> $GITHUB_ENV
-          echo "CPPFLAGS=-I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include \$CPPFLAGS" >> $GITHUB_ENV
+          echo "CXXFLAGS=-I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig:\$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Add binary paths to PATH
@@ -168,12 +168,6 @@ jobs:
         run: ./autogen.sh
 
       - name: Configure project
-        env:
-          PKG_CONFIG_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig
-          LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
-          LD_LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
-          CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
-          CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
         run: |
           CONFIG_SITE=`pwd` \
           ./configure \
