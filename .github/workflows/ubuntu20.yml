@@ -115,8 +115,10 @@ jobs:
           ./configure
           make
           sudo make install
-          sudo update-alternatives --install /usr/bin/autoconf autoconf /usr/local/bin/autoconf 1
-          echo "/usr/local/bin" >> $GITHUB_PATH
+          # remove old version of autoconf cuz if not it wont get replaced
+          sudo rm -f /usr/bin/autoconf
+          # create symlink to newly installed version
+          sudo ln -s /usr/local/bin/autoconf /usr/bin/autoconf
           autoconf --version
 
 
