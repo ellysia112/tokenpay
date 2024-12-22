@@ -14,9 +14,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Add cache for depends directory
-      - name: Cache dependencies
-        uses: actions/cache@v3
+      # First try to restore depends cache
+      - name: Restore depends cache
+        id: cache-depends
+        uses: actions/cache/restore@v3
         with:
           path: |
             depends/built
@@ -117,9 +118,22 @@ jobs:
       - name: Verify Python Version
         run: python --version
 
-      # Only build dependencies if cache miss
+      # Build dependencies if cache miss
       - name: Build dependencies
+        if: steps.cache-depends.outputs.cache-hit != 'true'
         run: cd depends && make -j8 HOST=x86_64-linux-gnu
+
+      # Save the depends cache after building
+      - name: Save depends cache
+        if: steps.cache-depends.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+            depends/x86_64-linux-gnu
+          key: ${{ runner.os }}-depends-${{ hashFiles('depends/packages/*') }}
 
       - name: Create berkeley db directories
         run: |
@@ -127,22 +141,6 @@ jobs:
 
       - name: Copy database static library
         run: cp $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/libdb_cxx.a $GITHUB_WORKSPACE/db-4.8.30.NC/build_unix/
-
-      # Cache the remaining steps outputs
-      - name: Cache build artifacts
-        uses: actions/cache@v3
-        with:
-          path: |
-            release
-            config.log
-            .deps
-            src/*.o
-            src/*.a
-            src/qt/*.o
-            src/qt/*.a
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
 
       - name: Add paths to environment
         run: |
