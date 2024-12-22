@@ -180,6 +180,14 @@ jobs:
         run: ./autogen.sh
 
       - name: Configure project
+        env:
+          PKG_CONFIG_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig
+          LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
+          LD_LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
+          CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
+          CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
+
+                                                      
         run: |
           CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site \
           ./configure \
@@ -192,5 +200,16 @@ jobs:
           --bindir=`pwd`/release/bin \
           --libdir=`pwd`/release/lib
 
+      - name: Check config.log
+        if: always()
+        run: cat config.log
+
       - name: Compile project
+        env:
+          PKG_CONFIG_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig
+          LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
+          LD_LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
+          CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
+          CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
         run: make
+        
