@@ -24,7 +24,7 @@ $(package)_qttools_sha256_hash=22d67de915cb8cd93e16fdd38fa006224ad9170bd217c2be1
 
 $(package)_download_path_webkit=http://download.qt.io/community_releases/5.7/5.7.1
 $(package)_qtwebkit_file_name=qtwebkit-opensource-src-5.7.1.tar.gz
-$(package)_qtwebkit_sha256_hash=8b3411cca15ff8b83e38fdf9d2f9113b81413980026e80462e06c95c3dcea056
+$(package)_qtwebkit_sha256_hash=1a26dc2a71f7854dd0cc4d153653c0287bb7c57e32c16b55c9f51f12ebce7675
 
 $(package)_ldflags_linux += -Wl,--wrap=log2f -Wl,--wrap=powf
 
