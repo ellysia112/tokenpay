@@ -21,23 +21,8 @@ jobs:
         run: |
           sudo apt-get install -y g++-mingw-w64-i686 mingw-w64-i686-dev
           sudo update-alternatives --set i686-w64-mingw32-g++ /usr/bin/i686-w64-mingw32-g++-posix
-
-      # Add caching for win32 depends
-      - name: Cache win32 depends
-        id: cache-win32-depends
-        uses: actions/cache@v3
-        with:
-          path: |
-            depends/built
-            depends/sdk-sources
-            depends/i686-w64-mingw32
-            depends/x86_64-w64-mingw32
-          key: win32-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}
-          restore-keys: |
-            win32-depends-${{ runner.os }}-
-
+          
       - name: create native bin location
-        if: steps.cache-win32-depends.outputs.cache-hit != 'true'
         run: cd depends && mkdir -p i686-w64-mingw32/native/bin
         
       - name: Add gperf native bin path to environment
@@ -47,34 +32,35 @@ jobs:
         run: sudo apt purge -y libssl-dev && sudo apt clean && sudo apt autoremove
 
       - name: Build dependencies in the depends folder
-        if: steps.cache-win32-depends.outputs.cache-hit != 'true'
         run: |
           PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
           cd depends/
           make -j18 HOST=i686-w64-mingw32
 
-      # Cache BDB build
-      - name: Cache BDB
-        id: cache-bdb
+      # Cache depends after building
+      - name: Cache win32 depends
         uses: actions/cache@v3
         with:
-          path: db-4.8.30.NC
-          key: bdb-4.8.30-${{ runner.os }}
+          path: |
+            depends/built
+            depends/sdk-sources
+            depends/i686-w64-mingw32
+            depends/x86_64-w64-mingw32
+          key: win32-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-${{ github.sha }}
+          restore-keys: |
+            win32-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-
+            win32-depends-${{ runner.os }}-
           
       - name: get and untar bdb4.8
-        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz && tar -xzvf db-4.8.30.NC.tar.gz
         
       - name: fix atomic
-        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h
         
       - name: build bdb4.8
-        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && ../dist/configure --enable-cxx --disable-shared --with-pic  --prefix=$BDB_PREFIX
         
       - name: make and make install 
-        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sudo make install
 
       - name: Auto-generate configuration
@@ -101,22 +87,8 @@ jobs:
         run: |
           sudo apt-get install -y g++-mingw-w64-x86-64
           sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
-
-      # Add caching for win64 depends
-      - name: Cache win64 depends
-        id: cache-win64-depends
-        uses: actions/cache@v3
-        with:
-          path: |
-            depends/built
-            depends/sdk-sources
-            depends/x86_64-w64-mingw32
-          key: win64-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}
-          restore-keys: |
-            win64-depends-${{ runner.os }}-
           
       - name: create native bin location
-        if: steps.cache-win64-depends.outputs.cache-hit != 'true'
         run: cd depends && mkdir -p x86_64-w64-mingw32/native/bin
         
       - name: Add gperf native bin path to environment
@@ -126,34 +98,34 @@ jobs:
         run: sudo apt purge -y libssl-dev && sudo apt clean && sudo apt autoremove
 
       - name: Build dependencies in the depends folder
-        if: steps.cache-win64-depends.outputs.cache-hit != 'true'
         run: |
           PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
           cd depends/
           make -j18 HOST=x86_64-w64-mingw32
 
-      # Use the same BDB cache as 32-bit
-      - name: Cache BDB
-        id: cache-bdb-64
+      # Cache depends after building
+      - name: Cache win64 depends
         uses: actions/cache@v3
         with:
-          path: db-4.8.30.NC
-          key: bdb-4.8.30-${{ runner.os }}
+          path: |
+            depends/built
+            depends/sdk-sources
+            depends/x86_64-w64-mingw32
+          key: win64-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-${{ github.sha }}
+          restore-keys: |
+            win64-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-
+            win64-depends-${{ runner.os }}-
           
       - name: get and untar bdb4.8
-        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz && tar -xzvf db-4.8.30.NC.tar.gz
         
       - name: fix atomic
-        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h 
         
       - name: build bdb4.8
-        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && ../dist/configure --enable-cxx --disable-shared --with-pic  --prefix=$BDB_PREFIX
         
       - name: make and make install 
-        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sudo make install
 
       - name: Add depends lib path to environment
