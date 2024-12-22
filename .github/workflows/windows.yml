@@ -1,11 +1,13 @@
-# on: 
+name: Windows Builds
+
+on: 
   push:
     branches:
       - main  # or your target branch
 
 jobs:
   windows32-ubuntu20:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v4
@@ -19,9 +21,24 @@ jobs:
         run: |
           sudo apt-get install -y g++-mingw-w64-i686 mingw-w64-i686-dev
           sudo update-alternatives --set i686-w64-mingw32-g++ /usr/bin/i686-w64-mingw32-g++-posix
-          
+
+      # Add caching for win32 depends
+      - name: Cache win32 depends
+        id: cache-win32-depends
+        uses: actions/cache@v3
+        with:
+          path: |
+            depends/built
+            depends/sdk-sources
+            depends/i686-w64-mingw32
+            depends/x86_64-w64-mingw32
+          key: win32-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}
+          restore-keys: |
+            win32-depends-${{ runner.os }}-
+
       - name: create native bin location
-        run: cd depends && mkdir i686-w64-mingw32 && cd i686-w64-mingw32 && mkdir native && cd native && mkdir bin
+        if: steps.cache-win32-depends.outputs.cache-hit != 'true'
+        run: cd depends && mkdir -p i686-w64-mingw32/native/bin
         
       - name: Add gperf native bin path to environment
         run: echo "/home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/native/bin" >> $GITHUB_PATH
@@ -30,71 +47,36 @@ jobs:
         run: sudo apt purge -y libssl-dev && sudo apt clean && sudo apt autoremove
 
       - name: Build dependencies in the depends folder
+        if: steps.cache-win32-depends.outputs.cache-hit != 'true'
         run: |
           PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
           cd depends/
-          make HOST=i686-w64-mingw32
+          make -j18 HOST=i686-w64-mingw32
+
+      # Cache BDB build
+      - name: Cache BDB
+        id: cache-bdb
+        uses: actions/cache@v3
+        with:
+          path: db-4.8.30.NC
+          key: bdb-4.8.30-${{ runner.os }}
           
       - name: get and untar bdb4.8
+        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz && tar -xzvf db-4.8.30.NC.tar.gz
         
-      - name: list files
-        run: ls
-        
       - name: fix atomic
+        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h
         
       - name: build bdb4.8
+        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && ../dist/configure --enable-cxx --disable-shared --with-pic  --prefix=$BDB_PREFIX
         
       - name: make and make install 
+        if: steps.cache-bdb.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sudo make install
-          
-      - name: list usr/bin
-        run: cd /usr/bin && ls
-        
-      - name: list usr/local/bin
-        run: cd /usr/local/bin && ls
-        
-      - name: list usr/local
-        run: cd /usr/local/ && ls
-      
-      - name: list made depends
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/ && ls -al
-        
-      - name: list made depends share
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/share && ls -al
-        
-      - name: list made depends include
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/include && ls -al
-        
-      - name: list made depends include boost
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/include/boost && ls -al
-        
-      - name: list made depends include openssl
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/include/openssl && ls -al
-        
-      - name: list made depends include QtCore
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/include/QtCore && ls -al
-        
-      - name: list made depends include QtWebKit
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/include/QtWebKit && ls -al
-        
-      - name: list made depends lib
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/lib && ls -al
-        
-      - name: list made depends lib pkgconfig
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/lib/pkgconfig && ls -al
-        
-      - name: list made depends bin
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/bin && ls -al
-        
-      - name: list made depends native
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/native && ls -al
-        
-      - name: list made depends native bin
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/native/bin && ls -al
-        
+
       - name: Auto-generate configuration
         run: ./autogen.sh
         
@@ -105,7 +87,7 @@ jobs:
         run: make -j2
 
   windows64-ubuntu20:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v4
@@ -119,9 +101,23 @@ jobs:
         run: |
           sudo apt-get install -y g++-mingw-w64-x86-64
           sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+      # Add caching for win64 depends
+      - name: Cache win64 depends
+        id: cache-win64-depends
+        uses: actions/cache@v3
+        with:
+          path: |
+            depends/built
+            depends/sdk-sources
+            depends/x86_64-w64-mingw32
+          key: win64-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}
+          restore-keys: |
+            win64-depends-${{ runner.os }}-
           
       - name: create native bin location
-        run: cd depends && mkdir x86_64-w64-mingw32 && cd x86_64-w64-mingw32 && mkdir native && cd native && mkdir bin
+        if: steps.cache-win64-depends.outputs.cache-hit != 'true'
+        run: cd depends && mkdir -p x86_64-w64-mingw32/native/bin
         
       - name: Add gperf native bin path to environment
         run: echo "/home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/native/bin" >> $GITHUB_PATH
@@ -130,59 +126,36 @@ jobs:
         run: sudo apt purge -y libssl-dev && sudo apt clean && sudo apt autoremove
 
       - name: Build dependencies in the depends folder
+        if: steps.cache-win64-depends.outputs.cache-hit != 'true'
         run: |
           PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
           cd depends/
-          make HOST=x86_64-w64-mingw32
+          make -j18 HOST=x86_64-w64-mingw32
+
+      # Use the same BDB cache as 32-bit
+      - name: Cache BDB
+        id: cache-bdb-64
+        uses: actions/cache@v3
+        with:
+          path: db-4.8.30.NC
+          key: bdb-4.8.30-${{ runner.os }}
           
       - name: get and untar bdb4.8
+        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz && tar -xzvf db-4.8.30.NC.tar.gz
         
       - name: fix atomic
+        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h 
         
       - name: build bdb4.8
+        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && ../dist/configure --enable-cxx --disable-shared --with-pic  --prefix=$BDB_PREFIX
         
       - name: make and make install 
+        if: steps.cache-bdb-64.outputs.cache-hit != 'true'
         run: cd db-4.8.30.NC/build_unix/ && sudo make install
-          
-      - name: list usr/bin
-        run: cd /usr/bin && ls
-        
-      - name: list usr/local/bin
-        run: cd /usr/local/bin && ls
-        
-      - name: list usr/local
-        run: cd /usr/local/ && ls
-          
-      - name: list made depends
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/ && ls
-        
-      - name: list made depends share
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/share && ls
-        
-      - name: list made depends include
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/include && ls
-        
-      - name: list made depends include boost
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/include/boost && ls
-        
-      - name: list made depends lib
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/lib && ls
-        
-      - name: list made depends lib pkgconfig
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/lib/pkgconfig && ls
-        
-      - name: list made depends bin
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/bin && ls
-        
-      - name: list made depends native
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/native && ls
-        
-      - name: list made depends native bin
-        run: cd /home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/native/bin && ls
-        
+
       - name: Add depends lib path to environment
         run: echo "/home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/lib" >> $GITHUB_PATH
 
@@ -194,8 +167,3 @@ jobs:
       
       - name: make
         run: make -j2
-
-
-
-
-
