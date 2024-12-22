@@ -105,23 +105,19 @@ jobs:
       - name: Verify Python Version
         run: python --version
 
-      - name: Update autoconf to 2.71 and run autogen.sh
+      - name: Install and update autoconf to 2.71
         run: |
-          sudo apt-get remove --purge -y autoconf
-          sudo apt-get autoremove -y
           wget https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
           tar -xzf autoconf-2.71.tar.gz
           cd autoconf-2.71
-          ./configure --prefix=/usr/local
+          # Install to a local directory to avoid system conflicts
+          ./configure --prefix=$HOME/.local
           make
-          sudo make install
-          echo "/usr/local/bin" >> $GITHUB_ENV
-          autoconf --version
-
-
-      - name: Install automake again
-        run: |
-          sudo apt-get install -y automake
+          make install
+          # Add the local bin to PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          # Verify the version
+          $HOME/.local/bin/autoconf --version
 
 
 
