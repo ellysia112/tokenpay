@@ -113,7 +113,7 @@ jobs:
       # Build dependencies if cache miss
       - name: Build dependencies
         if: steps.cache-depends.outputs.cache-hit != 'true'
-        run: cd depends && make -j8 HOST=x86_64-linux-gnu
+        run: cd depends && rm -rf sources/qt* && make -j8 HOST=x86_64-linux-gnu #remove old stuff in cache
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
