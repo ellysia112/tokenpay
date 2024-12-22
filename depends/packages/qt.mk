@@ -205,11 +205,11 @@ define $(package)_config_cmds
 endef
 
 define $(package)_build_cmds
-  $(MAKE) -C src $(addprefix sub-,$($(package)_qt_libs)) V=1 && \
-  $(MAKE) -C ../qttools/src/linguist/lrelease V=1 && \
-  $(MAKE) -C ../qttranslations V=1 && \
+  $(MAKE) -C src $(addprefix sub-,$($(package)_qt_libs)) && \
+  $(MAKE) -C ../qttools/src/linguist/lrelease && \
+  $(MAKE) -C ../qttranslations && \
   $($(package)_patch_prl_files) \
-  $(MAKE) -C ../qtwebkit V=1
+  $(MAKE) -C ../qtwebkit
 endef
 
 define $(package)_stage_cmds
