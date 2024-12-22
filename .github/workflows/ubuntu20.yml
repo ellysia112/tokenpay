@@ -180,10 +180,4 @@ jobs:
         run: cat config.log
 
       - name: Compile project
-        env:
-          PKG_CONFIG_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib/pkgconfig
-          LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
-          LD_LIBRARY_PATH: $GITHUB_WORKSPACE/depends/x86_64-linux-gnu/lib
-          CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
-          CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
         run: make
