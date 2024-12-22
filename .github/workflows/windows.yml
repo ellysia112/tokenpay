@@ -3,7 +3,7 @@ name: Windows Builds
 on: 
   push:
     branches:
-      - main  # or your target branch
+      - main
 
 jobs:
   windows32-ubuntu20:
@@ -21,23 +21,7 @@ jobs:
         run: |
           sudo apt-get install -y g++-mingw-w64-i686 mingw-w64-i686-dev
           sudo update-alternatives --set i686-w64-mingw32-g++ /usr/bin/i686-w64-mingw32-g++-posix
-          
-      - name: create native bin location
-        run: cd depends && mkdir -p i686-w64-mingw32/native/bin
-        
-      - name: Add gperf native bin path to environment
-        run: echo "/home/runner/work/tokenpay/tokenpay/depends/i686-w64-mingw32/native/bin" >> $GITHUB_PATH
 
-      - name: remove any previous versions of openssl
-        run: sudo apt purge -y libssl-dev && sudo apt clean && sudo apt autoremove
-
-      - name: Build dependencies in the depends folder
-        run: |
-          PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
-          cd depends/
-          make -j18 HOST=i686-w64-mingw32
-
-      # Cache depends after building
       - name: Cache win32 depends
         uses: actions/cache@v3
         with:
@@ -45,30 +29,35 @@ jobs:
             depends/built
             depends/sdk-sources
             depends/i686-w64-mingw32
-            depends/x86_64-w64-mingw32
-          key: win32-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-${{ github.sha }}
+          key: win32-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}
           restore-keys: |
             win32-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-
             win32-depends-${{ runner.os }}-
-          
+
+      - name: Build dependencies in the depends folder
+        run: |
+          PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
+          cd depends/
+          make -j18 HOST=i686-w64-mingw32
+
       - name: get and untar bdb4.8
         run: wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz && tar -xzvf db-4.8.30.NC.tar.gz
-        
+
       - name: fix atomic
         run: cd db-4.8.30.NC/build_unix/ && sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h
-        
+
       - name: build bdb4.8
         run: cd db-4.8.30.NC/build_unix/ && ../dist/configure --enable-cxx --disable-shared --with-pic  --prefix=$BDB_PREFIX
-        
+
       - name: make and make install 
         run: cd db-4.8.30.NC/build_unix/ && sudo make install
 
       - name: Auto-generate configuration
         run: ./autogen.sh
-        
+
       - name: configure
         run: CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --enable-gui --prefix=/
-        
+
       - name: make
         run: make -j2
 
@@ -87,23 +76,7 @@ jobs:
         run: |
           sudo apt-get install -y g++-mingw-w64-x86-64
           sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
-          
-      - name: create native bin location
-        run: cd depends && mkdir -p x86_64-w64-mingw32/native/bin
-        
-      - name: Add gperf native bin path to environment
-        run: echo "/home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/native/bin" >> $GITHUB_PATH
-        
-      - name: remove any previous versions of openssl
-        run: sudo apt purge -y libssl-dev && sudo apt clean && sudo apt autoremove
 
-      - name: Build dependencies in the depends folder
-        run: |
-          PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
-          cd depends/
-          make -j18 HOST=x86_64-w64-mingw32
-
-      # Cache depends after building
       - name: Cache win64 depends
         uses: actions/cache@v3
         with:
@@ -111,31 +84,34 @@ jobs:
             depends/built
             depends/sdk-sources
             depends/x86_64-w64-mingw32
-          key: win64-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-${{ github.sha }}
+          key: win64-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}
           restore-keys: |
             win64-depends-${{ runner.os }}-${{ hashFiles('depends/packages/*') }}-
             win64-depends-${{ runner.os }}-
-          
+
+      - name: Build dependencies in the depends folder
+        run: |
+          PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
+          cd depends/
+          make -j18 HOST=x86_64-w64-mingw32
+
       - name: get and untar bdb4.8
         run: wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz && tar -xzvf db-4.8.30.NC.tar.gz
-        
+
       - name: fix atomic
-        run: cd db-4.8.30.NC/build_unix/ && sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h 
-        
+        run: cd db-4.8.30.NC/build_unix/ && sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' ../dbinc/atomic.h
+
       - name: build bdb4.8
         run: cd db-4.8.30.NC/build_unix/ && ../dist/configure --enable-cxx --disable-shared --with-pic  --prefix=$BDB_PREFIX
-        
+
       - name: make and make install 
         run: cd db-4.8.30.NC/build_unix/ && sudo make install
 
-      - name: Add depends lib path to environment
-        run: echo "/home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/lib" >> $GITHUB_PATH
-
       - name: Auto-generate configuration
         run: ./autogen.sh
-        
+
       - name: configure
         run: CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --enable-gui --prefix=
-      
+
       - name: make
         run: make -j2
