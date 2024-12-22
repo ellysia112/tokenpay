@@ -164,7 +164,6 @@ jobs:
           CXXFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
           CPPFLAGS: -I$GITHUB_WORKSPACE/depends/x86_64-linux-gnu/include
         run: |
-          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site \
           ./configure \
           --enable-gui \
           --disable-bench \
