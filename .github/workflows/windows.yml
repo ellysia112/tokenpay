@@ -367,7 +367,7 @@ jobs:
         run: |
           PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
           cd depends/
-          make HOST=x86_64-w64-mingw32
+          make HOST=x86_64-w64-mingw32 -j4
 
       - name: Save depends cache
         if: steps.cache-depends.outputs.cache-hit != 'true'
