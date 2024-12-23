@@ -431,14 +431,24 @@ jobs:
       - name: Add depends lib path to environment
         run: echo "/home/runner/work/tokenpay/tokenpay/depends/x86_64-w64-mingw32/lib" >> $GITHUB_PATH
 
+      - name: Get liblzma
+        run: |
+          git clone https://github.com/xz-mirror/xz
+          cd xz
+          ./configure --host=x86_64-w64-mingw32 --prefix=/usr/x86_64-w64-mingw32 --enable-shared
+          make
+          make install
+
+
       - name: Auto-generate configuration
         run: ./autogen.sh
         
       - name: configure
-        run: CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site LIBS="-lws2_32 -lcrypt32" ./configure --enable-gui --prefix=
+        run: CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site PKG_CONFIG_PATH="$PWD/depends/x86_64-w64-mingw32/lib/pkgconfig" LIBS="-lws2_32 -lcrypt32" ./configure --enable-gui --prefix= 
         
+      - name: make
+        run: make -j2
+
       - name: Setup tmate session
         if: always() #yeah
         uses: mxschmitt/action-tmate@v3
-      - name: make
-        run: make -j2

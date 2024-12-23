@@ -1,3 +1,17 @@
+leveldb/build_config.mk
+leveldb/*.a
+leveldb/*.o
+leveldb/*.dylib*
+leveldb/*.so
+leveldb/*.so.*
+leveldb/*_test
+leveldb/db_bench
+leveldb/leveldbutil
+leveldb/Release
+leveldb/Debug
+leveldb/Benchmark
+leveldb/vs2010.*
+
 src/*.exe
 src/tokenpay
 src/tokenpayd
