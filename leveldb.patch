@@ -1,0 +1,14 @@
+--- leveldb/db/c_test.c	2024-12-23 11:53:10.915007587 +0000
++++ leveldb/db/c_test_new.c	2024-12-23 11:54:16.375006910 +0000
+@@ -168,11 +168,6 @@
+   CheckCondition(leveldb_major_version() >= 1);
+   CheckCondition(leveldb_minor_version() >= 1);
+ 
+-  snprintf(dbname, sizeof(dbname),
+-           "%s/leveldb_c_test-%d",
+-           GetTempDir(),
+-           ((int) geteuid()));
+-
+   StartPhase("create_objects");
+   cmp = leveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
+   env = leveldb_create_default_env();

@@ -442,12 +442,18 @@ jobs:
           sudo make install
 
 
+
       - name: Auto-generate configuration
         run: ./autogen.sh
         
       - name: configure
         run: CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site PKG_CONFIG_PATH="$PWD/depends/x86_64-w64-mingw32/lib/pkgconfig" LIBS="-lws2_32 -lcrypt32" ./configure --enable-gui --prefix= 
-        
+      
+      - name: Patch leveldb
+        run: |
+          cd leveldb
+          patch db/c_test.c < ../leveldb.patch
+
       - name: make
         run: make -j2
 
