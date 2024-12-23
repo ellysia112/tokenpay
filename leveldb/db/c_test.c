@@ -168,11 +168,6 @@ int main(int argc, char** argv) {
   CheckCondition(leveldb_major_version() >= 1);
   CheckCondition(leveldb_minor_version() >= 1);
 
-  snprintf(dbname, sizeof(dbname),
-           "%s/leveldb_c_test-%d",
-           GetTempDir(),
-           ((int) geteuid()));
-
   StartPhase("create_objects");
   cmp = leveldb_comparator_create(NULL, CmpDestroy, CmpCompare, CmpName);
   env = leveldb_create_default_env();
