@@ -447,7 +447,7 @@ jobs:
         run: ./autogen.sh
         
       - name: configure
-        run: CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site PKG_CONFIG_PATH="$PWD/depends/x86_64-w64-mingw32/lib/pkgconfig" LIBS="-lws2_32 -lcrypt32" ./configure --enable-gui --prefix= 
+        run: CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site PKG_CONFIG_PATH="$PWD/depends/x86_64-w64-mingw32/lib/pkgconfig" LIBS="-lws2_32 -lcrypt32" ./configure --enable-gui --prefix=`pwd`/depends/x86_64-w64-mingw32
       
       - name: Patch leveldb
         run: |
