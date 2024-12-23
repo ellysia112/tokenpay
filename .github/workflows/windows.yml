@@ -439,7 +439,7 @@ jobs:
           ./autogen.sh --no-po4a --no-doxygen
           ./configure --host=x86_64-w64-mingw32 --prefix=/usr/x86_64-w64-mingw32 --enable-shared
           make
-          make install
+          sudo make install
 
 
       - name: Auto-generate configuration
