@@ -266,6 +266,11 @@ jobs:
       - name: Install essential tools
         run: |
           sudo apt-get install -y \
+          libpng-dev \
+          libharfbuzz-dev \
+          libpcre3-dev \
+          libxcomposite-dev \
+          libxdamage-dev \
           build-essential \
           xutils-dev \
           libicu-dev \
