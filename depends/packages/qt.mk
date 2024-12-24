@@ -13,6 +13,9 @@ $(package)_patches+=0007-Include-intrin.h-for-declaration-of-_mm_mfence.patch
 $(package)_patches+=strip_log2f.patch
 $(package)_patches+=fix_qt_pkgconfig.patch fix-cocoahelpers-macos.patch qfixed-coretext.patch
 $(package)_patches+=fix_mojave_fonts.patch fix_qt_configure.patch
+$(package)_patches += WebKit1PatchX11.patch
+$(package)_patches += WebKit2TargetPatchX11.patch
+$(package)_patches += widgetsapiPatchX11.patch
 
 $(package)_qttranslations_file_name=qttranslations-$($(package)_suffix)
 $(package)_qttranslations_sha256_hash=3a15aebd523c6d89fb97b2d3df866c94149653a26d27a00aac9b6d3020bc5a1d
@@ -176,6 +179,10 @@ define $(package)_preprocess_cmds
   sed -i.old "s|QMAKE_LFLAGS            = |!host_build: QMAKE_LFLAGS            = $($(package)_ldflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
   sed -i.old "s|QMAKE_CXXFLAGS          = |!host_build: QMAKE_CXXFLAGS            = $($(package)_cxxflags) $($(package)_cppflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
   sed -i.old "s|debug_and_release|release|g" qtbase/mkspecs/win32-g++/qmake.conf
+  patch -p1 < $($(package)_patch_dir)/makegrammar.patch && \
+  patch -p1 < $($(package)_patch_dir)/WebKit1PatchX11.patch && \
+  patch -p1 < $($(package)_patch_dir)/WebKit2TargetPatchX11.patch && \
+  patch -p1 < $($(package)_patch_dir)/widgetsapiPatchX11.patch
 endef
 
 define $(package)_config_cmds
